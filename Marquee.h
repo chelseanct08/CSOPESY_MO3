@@ -4,7 +4,18 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+<<<<<<< Updated upstream
+=======
+#include <vector>
+
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+>>>>>>> Stashed changes
 #include <windows.h>
+
+inline constexpr int marqueeBorderColumn = 45;
+inline constexpr int marqueeAreaLeft = marqueeBorderColumn + 2;
 
 inline void setCursorPosition(int x, int y) {
     HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -25,12 +36,17 @@ private:
     std::thread marqueeThread;
     std::mutex textMutex;
 
-    int x = 2;
+    int x = marqueeAreaLeft;
     int y = 1;
     int dx = 1;
     int dy = 1;
+<<<<<<< Updated upstream
     std::string previousText;
     int previousX = 2;
+=======
+    std::vector<std::string> previousBackground;
+    int previousX = marqueeAreaLeft;
+>>>>>>> Stashed changes
     int previousY = 1;
 
     void run();

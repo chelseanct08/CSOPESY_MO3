@@ -2,6 +2,7 @@
 #include <chrono>
 
 Marquee::Marquee()
+<<<<<<< Updated upstream
     : text("Hello World"), speed(100), running(false) {
     x = 2;
     y = 1;
@@ -10,6 +11,9 @@ Marquee::Marquee()
     previousText.clear();
     previousX = 2;
     previousY = 1;
+=======
+    : text(defaultMarquee), speed(125), running(false) {
+>>>>>>> Stashed changes
 }
 
 Marquee::~Marquee() {
@@ -55,9 +59,12 @@ bool Marquee::isRunning() const {
 void Marquee::run() {
     HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 
+<<<<<<< Updated upstream
     const int marqueeTop = 1;
     const int menuRight = 43;
 
+=======
+>>>>>>> Stashed changes
     while (running) {
         CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
@@ -114,6 +121,7 @@ void Marquee::run() {
         if (textWidth >= windowWidth) {
             textWidth = windowWidth - 1;
 
+<<<<<<< Updated upstream
             if (textWidth > 0) {
                 currentText =
                     currentText.substr(0, textWidth);
@@ -129,6 +137,65 @@ void Marquee::run() {
         if (maxX < minX) {
             maxX = minX;
         }
+=======
+            if (lineEnd == std::string::npos) {
+                lineEnd = currentText.length();
+            }
+
+            lines.push_back(
+                currentText.substr(
+                    lineStart,
+                    lineEnd - lineStart
+                )
+            );
+
+            if (lineEnd == currentText.length()) {
+                break;
+            }
+
+            lineStart = lineEnd + 1;
+        }
+
+        int textWidth = 0;
+
+        for (const std::string& line : lines) {
+            textWidth = std::max(
+                textWidth,
+                static_cast<int>(line.length())
+            );
+        }
+
+        const int availableWidth =
+            std::max(1, windowWidth - marqueeAreaLeft - 1);
+
+        for (std::string& line : lines) {
+            if (static_cast<int>(line.length()) > availableWidth) {
+                line.resize(availableWidth);
+            }
+        }
+
+        textWidth = std::min(
+            textWidth,
+            availableWidth
+        );
+
+        int minX = std::min(
+            marqueeAreaLeft,
+            std::max(0, windowWidth - 1)
+        );
+
+        int maxX = std::max(
+            minX,
+            windowWidth - textWidth - 1
+        );
+
+        int minY = 0;
+
+        int maxY = std::max(
+            minY,
+            windowHeight - static_cast<int>(lines.size())
+        );
+>>>>>>> Stashed changes
 
         if (x > maxX) {
             x = maxX;
@@ -208,7 +275,63 @@ void Marquee::run() {
             &charsWritten
         );
 
+<<<<<<< Updated upstream
         previousText = currentText;
+=======
+        for (size_t index = 0;
+             index < lines.size();
+             ++index) {
+
+            if (!lines[index].empty()) {
+                currentBackground[index].resize(
+                    lines[index].length(),
+                    ' '
+                );
+
+                COORD backgroundPosition = {
+                    static_cast<SHORT>(x),
+                    static_cast<SHORT>(
+                        y +
+                        static_cast<int>(index)
+                    )
+                };
+
+                DWORD charsRead = 0;
+
+                ReadConsoleOutputCharacterA(
+                    console,
+                    &currentBackground[index][0],
+                    static_cast<DWORD>(
+                        currentBackground[index].length()
+                    ),
+                    backgroundPosition,
+                    &charsRead
+                );
+            }
+
+            COORD position = {
+                static_cast<SHORT>(x),
+                static_cast<SHORT>(
+                    y +
+                    static_cast<int>(index)
+                )
+            };
+
+            DWORD charsWritten = 0;
+
+            WriteConsoleOutputCharacterA(
+                console,
+                lines[index].c_str(),
+                static_cast<DWORD>(
+                    lines[index].length()
+                ),
+                position,
+                &charsWritten
+            );
+        }
+
+        previousBackground = currentBackground;
+>>>>>>> Stashed changes
         previousX = x;
         previousY = y;
 
