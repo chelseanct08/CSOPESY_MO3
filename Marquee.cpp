@@ -67,6 +67,7 @@ void Marquee::run() {
     HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 
     const int marqueeTop = 0;
+
     while (running) {
         CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
@@ -103,43 +104,66 @@ void Marquee::run() {
 
         std::vector<std::string> lines;
         size_t lineStart = 0;
+
         while (lineStart <= currentText.length()) {
             size_t lineEnd = currentText.find('\n', lineStart);
+
             if (lineEnd == std::string::npos) {
                 lineEnd = currentText.length();
             }
 
-            lines.push_back(currentText.substr(lineStart, lineEnd - lineStart));
+            lines.push_back(
+                currentText.substr(
+                    lineStart,
+                    lineEnd - lineStart
+                )
+            );
+
             if (lineEnd == currentText.length()) {
                 break;
             }
+
             lineStart = lineEnd + 1;
         }
 
-        const int marqueeBottom = std::max(marqueeTop, windowHeight - 1);
-        const int availableRows = marqueeBottom - marqueeTop + 1;
-        if (static_cast<int>(lines.size()) > availableRows) {
-            lines.resize(availableRows);
-        }
-
         int textWidth = 0;
+
         for (const std::string& line : lines) {
-            textWidth = std::max(textWidth, static_cast<int>(line.length()));
+            textWidth = std::max(
+                textWidth,
+                static_cast<int>(line.length())
+            );
         }
 
-        const int availableWidth = std::max(1, windowWidth - 1);
+        const int availableWidth =
+            std::max(1, windowWidth - 1);
+
         for (std::string& line : lines) {
             if (static_cast<int>(line.length()) > availableWidth) {
                 line.resize(availableWidth);
             }
         }
-        textWidth = std::min(textWidth, availableWidth);
+
+        textWidth = std::min(
+            textWidth,
+            availableWidth
+        );
+
+        const int menuTop = windowHeight - 19;
 
         int minX = 0;
-        int maxX = std::max(minX, windowWidth - textWidth - 1);
+
+        int maxX = std::max(
+            minX,
+            windowWidth - textWidth - 1
+        );
 
         int minY = marqueeTop;
-        int maxY = std::max(minY, marqueeBottom - static_cast<int>(lines.size()) + 1);
+
+        int maxY = std::max(
+            minY,
+            menuTop - static_cast<int>(lines.size()) - 1
+        );
 
         if (x > maxX) {
             x = maxX;
@@ -177,38 +201,65 @@ void Marquee::run() {
             dy = 1;
         }
 
-        for (size_t index = 0; index < previousBackground.size(); ++index) {
+        for (size_t index = 0;
+             index < previousBackground.size();
+             ++index) {
+
             if (previousBackground[index].empty()) {
                 continue;
             }
 
             COORD oldPosition = {
                 static_cast<SHORT>(previousX),
-                static_cast<SHORT>(previousY + static_cast<int>(index))
+                static_cast<SHORT>(
+                    previousY +
+                    static_cast<int>(index)
+                )
             };
+
             DWORD charsWritten = 0;
+
             WriteConsoleOutputCharacterA(
                 console,
                 previousBackground[index].c_str(),
-                static_cast<DWORD>(previousBackground[index].length()),
+                static_cast<DWORD>(
+                    previousBackground[index].length()
+                ),
                 oldPosition,
                 &charsWritten
             );
         }
 
-        std::vector<std::string> currentBackground(lines.size());
-        for (size_t index = 0; index < lines.size(); ++index) {
+        std::vector<std::string> currentBackground(
+            lines.size()
+        );
+
+        for (size_t index = 0;
+             index < lines.size();
+             ++index) {
+
             if (!lines[index].empty()) {
-                currentBackground[index].resize(lines[index].length(), ' ');
+                currentBackground[index].resize(
+                    lines[index].length(),
+                    ' '
+                );
+
                 COORD backgroundPosition = {
                     static_cast<SHORT>(x),
-                    static_cast<SHORT>(y + static_cast<int>(index))
+                    static_cast<SHORT>(
+                        y +
+                        static_cast<int>(index)
+                    )
                 };
+
                 DWORD charsRead = 0;
+
                 ReadConsoleOutputCharacterA(
                     console,
                     &currentBackground[index][0],
-                    static_cast<DWORD>(currentBackground[index].length()),
+                    static_cast<DWORD>(
+                        currentBackground[index].length()
+                    ),
                     backgroundPosition,
                     &charsRead
                 );
@@ -216,20 +267,27 @@ void Marquee::run() {
 
             COORD position = {
                 static_cast<SHORT>(x),
-                static_cast<SHORT>(y + static_cast<int>(index))
+                static_cast<SHORT>(
+                    y +
+                    static_cast<int>(index)
+                )
             };
+
             DWORD charsWritten = 0;
+
             WriteConsoleOutputCharacterA(
                 console,
                 lines[index].c_str(),
-                static_cast<DWORD>(lines[index].length()),
+                static_cast<DWORD>(
+                    lines[index].length()
+                ),
                 position,
                 &charsWritten
             );
         }
 
         previousLines = lines;
-    previousBackground = currentBackground;
+        previousBackground = currentBackground;
         previousX = x;
         previousY = y;
 
@@ -241,20 +299,30 @@ void Marquee::run() {
         y += dy;
     }
 
-    for (size_t index = 0; index < previousBackground.size(); ++index) {
+    for (size_t index = 0;
+         index < previousBackground.size();
+         ++index) {
+
         if (previousBackground[index].empty()) {
             continue;
         }
 
         COORD position = {
             static_cast<SHORT>(previousX),
-            static_cast<SHORT>(previousY + static_cast<int>(index))
+            static_cast<SHORT>(
+                previousY +
+                static_cast<int>(index)
+            )
         };
+
         DWORD charsWritten = 0;
+
         WriteConsoleOutputCharacterA(
             console,
             previousBackground[index].c_str(),
-            static_cast<DWORD>(previousBackground[index].length()),
+            static_cast<DWORD>(
+                previousBackground[index].length()
+            ),
             position,
             &charsWritten
         );

@@ -5,6 +5,8 @@
 #include <atomic>
 #include <mutex>
 #include <vector>
+
+#define NOMINMAX
 #include <windows.h>
 
 inline void setCursorPosition(int x, int y) {
