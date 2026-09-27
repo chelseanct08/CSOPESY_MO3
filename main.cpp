@@ -77,20 +77,6 @@ void clearCommandLine(int promptRow, int) {
 
 void displayWelcome(int, int) {
     int menuLeft = 2;
-<<<<<<< Updated upstream
-
-    setCursorPosition(menuLeft, commandAreaTop);
-    std::cout << "========================================";
-
-    setCursorPosition(menuLeft, commandAreaTop + 1);
-    std::cout << "              OS EMULATOR";
-
-    setCursorPosition(menuLeft, commandAreaTop + 2);
-    std::cout << "========================================";
-
-    setCursorPosition(menuLeft, commandAreaTop + 4);
-    std::cout << " Type 'help' to display available commands.";
-=======
     const int welcomeTop = 0;
     setCursorPosition(menuLeft, welcomeTop);
     std::cout << " Welcome to CSOPESY!";
@@ -108,7 +94,6 @@ void displayWelcome(int, int) {
     std::cout << " Version date: 2026-09-27";
     setCursorPosition(menuLeft, welcomeTop + 7);
     std::cout << " enter \"help\" to start and display commands";
->>>>>>> Stashed changes
 }
 
 void displayMenu(int, int) {

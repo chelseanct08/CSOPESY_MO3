@@ -4,14 +4,12 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
-<<<<<<< Updated upstream
-=======
+
 #include <vector>
 
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
->>>>>>> Stashed changes
 #include <windows.h>
 
 inline constexpr int marqueeBorderColumn = 45;
@@ -40,13 +38,10 @@ private:
     int y = 1;
     int dx = 1;
     int dy = 1;
-<<<<<<< Updated upstream
-    std::string previousText;
-    int previousX = 2;
-=======
+
     std::vector<std::string> previousBackground;
     int previousX = marqueeAreaLeft;
->>>>>>> Stashed changes
+
     int previousY = 1;
 
     void run();
