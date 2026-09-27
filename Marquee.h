@@ -4,6 +4,7 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <vector>
 #include <windows.h>
 
 inline void setCursorPosition(int x, int y) {
@@ -29,7 +30,8 @@ private:
     int y = 1;
     int dx = 1;
     int dy = 1;
-    std::string previousText;
+    std::vector<std::string> previousLines;
+    std::vector<std::string> previousBackground;
     int previousX = 2;
     int previousY = 1;
 

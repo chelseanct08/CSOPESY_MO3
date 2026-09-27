@@ -79,16 +79,25 @@ void displayWelcome(int commandAreaTop, int) {
     int menuLeft = 2;
 
     setCursorPosition(menuLeft, commandAreaTop);
-    std::cout << "========================================";
-
-    setCursorPosition(menuLeft, commandAreaTop + 1);
-    std::cout << "              OS EMULATOR";
+    std::cout << " Welcome to CSOPESY!";
 
     setCursorPosition(menuLeft, commandAreaTop + 2);
-    std::cout << "========================================";
+    std::cout << " Group developer:";
+
+    setCursorPosition(menuLeft, commandAreaTop + 3);
+    std::cout << "   Hernaez, Raeka Estrelle";
 
     setCursorPosition(menuLeft, commandAreaTop + 4);
-    std::cout << " Type 'help' to display available commands.";
+    std::cout << "   Liwanag, Ram Miguel";
+
+    setCursorPosition(menuLeft, commandAreaTop + 5);
+    std::cout << "   Serrano, Paul Rhazzel";
+
+    setCursorPosition(menuLeft, commandAreaTop + 6);
+    std::cout << "   Tamayo, Chelsea Nichole";
+
+    setCursorPosition(menuLeft, commandAreaTop + 8);
+    std::cout << " Version date: 2026-09-27";
 }
 
 void displayMenu(int commandAreaTop, int) {
@@ -139,7 +148,7 @@ void displayPrompt(int commandAreaTop, int) {
         commandAreaTop + 14
     );
 
-    std::cout << " Enter command: ";
+    std::cout << " Command> ";
 }
 
 void printPromptLine(int commandAreaTop, const std::string& message) {
@@ -301,6 +310,9 @@ int main() {
             );
 
             marquee.setText(text);
+            if (!marquee.isRunning()) {
+                marquee.start();
+            }
 
             clearCommandLine(
                 commandAreaTop,
@@ -309,7 +321,7 @@ int main() {
 
             printPromptLine(
                 commandAreaTop,
-                " Enter command: "
+                " Command> "
             );
         }
         else if (command == "set_speed") {
@@ -350,7 +362,7 @@ int main() {
 
                 printPromptLine(
                     commandAreaTop,
-                    " Enter command: "
+                    " Command> "
                 );
             }
             else if (speed <= 0) {
@@ -375,7 +387,7 @@ int main() {
 
                 printPromptLine(
                     commandAreaTop,
-                    " Enter command: "
+                    " Command> "
                 );
             }
             else {
@@ -390,7 +402,7 @@ int main() {
 
                 printPromptLine(
                     commandAreaTop,
-                    " Enter command: "
+                    " Command> "
                 );
             }
         }
@@ -432,7 +444,7 @@ int main() {
 
             printPromptLine(
                 commandAreaTop,
-                " Enter command: "
+                " Command> "
             );
         }
     }

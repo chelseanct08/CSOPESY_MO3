@@ -1,14 +1,25 @@
 #include "Marquee.h"
+#include <algorithm>
 #include <chrono>
 
+namespace {
+const char* defaultMarquee =
+    "   _____  _____  ____  _____  ______  _______     __\n"
+    "  / ____|/ ____|/ __ \\|  __ \\|  ____|/ ____\\ \\   / /\n"
+    " | |    | (___ | |  | | |__) | |__  | (___  \\ \\_/ /\n"
+    " | |     \\___ \\| |  | |  ___/|  __|  \\___ \\  \\   /\n"
+    " | |____ ____) | |__| | |    | |____ ____) |  | |\n"
+    "  \\_____|_____/ \\____/|_|    |______|_____/   |_|";
+}
+
 Marquee::Marquee()
-    : text("Hello World"), speed(100), running(false) {
-    x = 2;
+    : text(defaultMarquee), speed(125), running(false) {
+    x = 0;
     y = 1;
     dx = 1;
     dy = 1;
-    previousText.clear();
-    previousX = 2;
+    previousLines.clear();
+    previousX = 0;
     previousY = 1;
 }
 
@@ -55,9 +66,7 @@ bool Marquee::isRunning() const {
 void Marquee::run() {
     HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    const int marqueeTop = 1;
-    const int menuRight = 43;
-
+    const int marqueeTop = 0;
     while (running) {
         CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
@@ -77,18 +86,6 @@ void Marquee::run() {
             consoleInfo.srWindow.Bottom -
             consoleInfo.srWindow.Top + 1;
 
-        int marqueeBottom = windowHeight - 1;
-
-        const int safeRight = windowWidth - 1;
-        if (x < menuRight) {
-            x = menuRight;
-            dx = 1;
-        }
-        if (x > safeRight) {
-            x = safeRight;
-            dx = -1;
-        }
-
         std::string currentText;
 
         {
@@ -104,31 +101,45 @@ void Marquee::run() {
             continue;
         }
 
-        int textWidth =
-            static_cast<int>(currentText.length());
+        std::vector<std::string> lines;
+        size_t lineStart = 0;
+        while (lineStart <= currentText.length()) {
+            size_t lineEnd = currentText.find('\n', lineStart);
+            if (lineEnd == std::string::npos) {
+                lineEnd = currentText.length();
+            }
 
-        /*
-            If the text is wider than the console,
-            shorten it so it remains visible.
-        */
-        if (textWidth >= windowWidth) {
-            textWidth = windowWidth - 1;
+            lines.push_back(currentText.substr(lineStart, lineEnd - lineStart));
+            if (lineEnd == currentText.length()) {
+                break;
+            }
+            lineStart = lineEnd + 1;
+        }
 
-            if (textWidth > 0) {
-                currentText =
-                    currentText.substr(0, textWidth);
+        const int marqueeBottom = std::max(marqueeTop, windowHeight - 1);
+        const int availableRows = marqueeBottom - marqueeTop + 1;
+        if (static_cast<int>(lines.size()) > availableRows) {
+            lines.resize(availableRows);
+        }
+
+        int textWidth = 0;
+        for (const std::string& line : lines) {
+            textWidth = std::max(textWidth, static_cast<int>(line.length()));
+        }
+
+        const int availableWidth = std::max(1, windowWidth - 1);
+        for (std::string& line : lines) {
+            if (static_cast<int>(line.length()) > availableWidth) {
+                line.resize(availableWidth);
             }
         }
+        textWidth = std::min(textWidth, availableWidth);
 
-        int minX = menuRight;
-        int maxX = windowWidth - textWidth - 2;
+        int minX = 0;
+        int maxX = std::max(minX, windowWidth - textWidth - 1);
 
         int minY = marqueeTop;
-        int maxY = marqueeBottom;
-
-        if (maxX < minX) {
-            maxX = minX;
-        }
+        int maxY = std::max(minY, marqueeBottom - static_cast<int>(lines.size()) + 1);
 
         if (x > maxX) {
             x = maxX;
@@ -166,49 +177,59 @@ void Marquee::run() {
             dy = 1;
         }
 
-        if (!previousText.empty()) {
-            COORD oldPosition;
+        for (size_t index = 0; index < previousBackground.size(); ++index) {
+            if (previousBackground[index].empty()) {
+                continue;
+            }
 
-            oldPosition.X =
-                static_cast<SHORT>(previousX);
-
-            oldPosition.Y =
-                static_cast<SHORT>(previousY);
-
+            COORD oldPosition = {
+                static_cast<SHORT>(previousX),
+                static_cast<SHORT>(previousY + static_cast<int>(index))
+            };
             DWORD charsWritten = 0;
-
             WriteConsoleOutputCharacterA(
                 console,
-                std::string(
-                    previousText.length(),
-                    ' '
-                ).c_str(),
-                static_cast<DWORD>(
-                    previousText.length()
-                ),
+                previousBackground[index].c_str(),
+                static_cast<DWORD>(previousBackground[index].length()),
                 oldPosition,
                 &charsWritten
             );
         }
 
-        COORD position;
+        std::vector<std::string> currentBackground(lines.size());
+        for (size_t index = 0; index < lines.size(); ++index) {
+            if (!lines[index].empty()) {
+                currentBackground[index].resize(lines[index].length(), ' ');
+                COORD backgroundPosition = {
+                    static_cast<SHORT>(x),
+                    static_cast<SHORT>(y + static_cast<int>(index))
+                };
+                DWORD charsRead = 0;
+                ReadConsoleOutputCharacterA(
+                    console,
+                    &currentBackground[index][0],
+                    static_cast<DWORD>(currentBackground[index].length()),
+                    backgroundPosition,
+                    &charsRead
+                );
+            }
 
-        position.X = static_cast<SHORT>(x);
-        position.Y = static_cast<SHORT>(y);
+            COORD position = {
+                static_cast<SHORT>(x),
+                static_cast<SHORT>(y + static_cast<int>(index))
+            };
+            DWORD charsWritten = 0;
+            WriteConsoleOutputCharacterA(
+                console,
+                lines[index].c_str(),
+                static_cast<DWORD>(lines[index].length()),
+                position,
+                &charsWritten
+            );
+        }
 
-        DWORD charsWritten = 0;
-
-        WriteConsoleOutputCharacterA(
-            console,
-            currentText.c_str(),
-            static_cast<DWORD>(
-                currentText.length()
-            ),
-            position,
-            &charsWritten
-        );
-
-        previousText = currentText;
+        previousLines = lines;
+    previousBackground = currentBackground;
         previousX = x;
         previousY = y;
 
@@ -220,26 +241,20 @@ void Marquee::run() {
         y += dy;
     }
 
-    if (!previousText.empty()) {
-        COORD position;
+    for (size_t index = 0; index < previousBackground.size(); ++index) {
+        if (previousBackground[index].empty()) {
+            continue;
+        }
 
-        position.X =
-            static_cast<SHORT>(previousX);
-
-        position.Y =
-            static_cast<SHORT>(previousY);
-
+        COORD position = {
+            static_cast<SHORT>(previousX),
+            static_cast<SHORT>(previousY + static_cast<int>(index))
+        };
         DWORD charsWritten = 0;
-
         WriteConsoleOutputCharacterA(
             console,
-            std::string(
-                previousText.length(),
-                ' '
-            ).c_str(),
-            static_cast<DWORD>(
-                previousText.length()
-            ),
+            previousBackground[index].c_str(),
+            static_cast<DWORD>(previousBackground[index].length()),
             position,
             &charsWritten
         );
