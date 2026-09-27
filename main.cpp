@@ -13,6 +13,17 @@ void setCursorPosition(int x, int y) {
     SetConsoleCursorPosition(console, position);
 }
 
+void clearCommandLine(int commandAreaTop, int windowWidth) {
+    const int menuWidth = 40;
+    int menuLeft = (windowWidth - menuWidth) / 2;
+
+    setCursorPosition(menuLeft, commandAreaTop + 14);
+
+    std::cout << std::string(menuWidth, ' ');
+
+    setCursorPosition(menuLeft, commandAreaTop + 14);
+}
+
 void displayWelcome(int commandAreaTop, int windowWidth) {
     const int menuWidth = 40;
     int menuLeft = (windowWidth - menuWidth) / 2;
@@ -34,10 +45,7 @@ void displayWelcome(int commandAreaTop, int windowWidth) {
     std::cout << "----------------------------------------";
 
     setCursorPosition(menuLeft, commandAreaTop + 7);
-    std::cout << "              Enter command:";
-
-    setCursorPosition(menuLeft, commandAreaTop + 8);
-    std::cout << "              > ";
+    std::cout << " Enter command: ";
 }
 
 void displayMenu(int commandAreaTop, int windowWidth) {
@@ -82,10 +90,7 @@ void displayMenu(int commandAreaTop, int windowWidth) {
     std::cout << "----------------------------------------";
 
     setCursorPosition(menuLeft, commandAreaTop + 14);
-    std::cout << "              Enter command:";
-
-    setCursorPosition(menuLeft, commandAreaTop + 15);
-    std::cout << "              > ";
+    std::cout << " Enter command: ";
 }
 
 int main() {
@@ -122,67 +127,68 @@ int main() {
         else if (command == "start_marquee") {
             marquee.start();
 
-            int menuWidth = 40;
-            int menuLeft = (windowWidth - menuWidth) / 2;
+            clearCommandLine(commandAreaTop, windowWidth);
 
-            setCursorPosition(menuLeft, commandAreaTop + 15);
-            std::cout << "              > ";
+            std::cout << " Enter command: ";
         }
         else if (command == "stop_marquee") {
             marquee.stop();
 
-            int menuWidth = 40;
-            int menuLeft = (windowWidth - menuWidth) / 2;
+            clearCommandLine(commandAreaTop, windowWidth);
 
-            setCursorPosition(menuLeft, commandAreaTop + 15);
-            std::cout << "              > ";
+            std::cout << " Enter command: ";
         }
         else if (command == "set_text") {
             std::string text;
 
-            int menuWidth = 40;
-            int menuLeft = (windowWidth - menuWidth) / 2;
+            clearCommandLine(commandAreaTop, windowWidth);
 
-            setCursorPosition(menuLeft, commandAreaTop + 15);
-            std::cout << "              Enter marquee text: ";
+            std::cout << " Enter marquee text: ";
 
             std::getline(std::cin, text);
 
             marquee.setText(text);
 
-            setCursorPosition(menuLeft, commandAreaTop + 15);
-            std::cout << "              > ";
+            clearCommandLine(commandAreaTop, windowWidth);
+
+            std::cout << " Enter command: ";
         }
         else if (command == "set_speed") {
             int speed;
 
-            int menuWidth = 40;
-            int menuLeft = (windowWidth - menuWidth) / 2;
+            clearCommandLine(commandAreaTop, windowWidth);
 
-            setCursorPosition(menuLeft, commandAreaTop + 15);
-            std::cout << "              Enter speed in milliseconds: ";
+            std::cout << " Enter speed in milliseconds: ";
 
             std::cin >> speed;
             std::cin.ignore(1000, '\n');
 
             marquee.setSpeed(speed);
 
-            setCursorPosition(menuLeft, commandAreaTop + 15);
-            std::cout << "              > ";
+            clearCommandLine(commandAreaTop, windowWidth);
+
+            std::cout << " Enter command: ";
         }
         else if (command == "exit") {
             marquee.stop();
             break;
         }
         else {
-            int menuWidth = 40;
-            int menuLeft = (windowWidth - menuWidth) / 2;
+            clearCommandLine(commandAreaTop, windowWidth);
 
-            setCursorPosition(menuLeft, commandAreaTop + 15);
-            std::cout << "              Unknown command.";
+            std::cout << " Unknown command.";
 
-            setCursorPosition(menuLeft, commandAreaTop + 16);
-            std::cout << "              > ";
+            setCursorPosition(
+                (windowWidth - 40) / 2,
+                commandAreaTop + 15
+            );
+
+            std::cout << " Enter command: ";
+
+            setCursorPosition(
+                (windowWidth - 40) / 2,
+                commandAreaTop + 14
+            );
         }
     }
 
