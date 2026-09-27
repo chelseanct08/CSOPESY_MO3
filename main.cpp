@@ -1,196 +1,260 @@
 #include <iostream>
 #include <string>
 #include <windows.h>
+#include <cstdlib>
 #include "Marquee.h"
 
-void setCursorPosition(int x, int y) {
+void getConsoleSize(int& windowWidth, int& windowHeight) {
     HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    COORD position;
-    position.X = static_cast<SHORT>(x);
-    position.Y = static_cast<SHORT>(y);
-
-    SetConsoleCursorPosition(console, position);
+    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+    if (GetConsoleScreenBufferInfo(console, &consoleInfo)) {
+        windowWidth = consoleInfo.srWindow.Right - consoleInfo.srWindow.Left + 1;
+        windowHeight = consoleInfo.srWindow.Bottom - consoleInfo.srWindow.Top + 1;
+    }
+    else {
+        windowWidth = 80;
+        windowHeight = 25;
+    }
 }
 
-void clearCommandLine(int commandAreaTop, int windowWidth) {
-    const int menuWidth = 40;
-    int menuLeft = (windowWidth - menuWidth) / 2;
-
-    setCursorPosition(menuLeft, commandAreaTop + 14);
-
-    std::cout << std::string(menuWidth, ' ');
-
-    setCursorPosition(menuLeft, commandAreaTop + 14);
+void clearCommandLine(int promptRow, int width = 80) {
+    int left = 2;
+    setCursorPosition(left, promptRow);
+    std::cout << std::string(width, ' ');
+    setCursorPosition(left, promptRow);
 }
 
-void displayWelcome(int commandAreaTop, int windowWidth) {
-    const int menuWidth = 40;
-    int menuLeft = (windowWidth - menuWidth) / 2;
-
-    setCursorPosition(menuLeft, commandAreaTop);
-
-    std::cout << "========================================\n";
-
-    setCursorPosition(menuLeft, commandAreaTop + 1);
-    std::cout << "              OS EMULATOR\n";
-
-    setCursorPosition(menuLeft, commandAreaTop + 2);
-    std::cout << "========================================\n";
-
-    setCursorPosition(menuLeft, commandAreaTop + 4);
-    std::cout << " Type 'help' to display available commands.";
-
-    setCursorPosition(menuLeft, commandAreaTop + 6);
-    std::cout << "----------------------------------------";
-
-    setCursorPosition(menuLeft, commandAreaTop + 7);
-    std::cout << " Enter command: ";
+void printPromptLine(int promptRow, const std::string& message) {
+    setCursorPosition(2, promptRow);
+    std::cout << message;
 }
 
-void displayMenu(int commandAreaTop, int windowWidth) {
-    const int menuWidth = 40;
-    int menuLeft = (windowWidth - menuWidth) / 2;
+void displayHeader(int startRow) {
+    int left = 1;
 
-    setCursorPosition(menuLeft, commandAreaTop);
+    // CSOPESY Title without border lines
+    setCursorPosition(left, startRow);
+    std::cout << R"(
+   _____  _____  ____  _____  ______  _______     __
+  / ____|/ ____|/ __ \|  __ \|  ____|/ ____\ \   / /
+ | |    | (___ | |  | | |__) | |__  | (___  \ \_/ / 
+ | |     \___ \| |  | |  ___/|  __|  \___ \  \   /  
+ | |____ ____) | |__| | |    | |____ ____) |  | |   
+  \_____|_____/ \____/|_|    |______|_____/   |_|           
 
-    std::cout << "========================================\n";
+                                                                                                                                                             
+  )" << '\n';
 
-    setCursorPosition(menuLeft, commandAreaTop + 1);
-    std::cout << "              OS EMULATOR\n";
+    setCursorPosition(left, startRow + 8);
+    std::cout << "Welcome to CSOPESY!";
 
-    setCursorPosition(menuLeft, commandAreaTop + 2);
-    std::cout << "========================================\n";
+    setCursorPosition(left, startRow + 9);
+    std::cout << "Group developer:";
+    setCursorPosition(left, startRow + 10);
+    std::cout << "  Hernaez, Raeka";
+    setCursorPosition(left, startRow + 11);
+    std::cout << "  Liwanag, Ram Miguel";
+    setCursorPosition(left, startRow + 12);
+    std::cout << "  Serrano, Paul";
+    setCursorPosition(left, startRow + 13);
+    std::cout << "  Tamayo, Chelsea";
 
-    setCursorPosition(menuLeft, commandAreaTop + 4);
-    std::cout << "                 COMMANDS\n";
+    setCursorPosition(left, startRow + 15);
+    std::cout << "Version date: Sept 27, 2026";
 
-    setCursorPosition(menuLeft, commandAreaTop + 5);
-    std::cout << "----------------------------------------\n";
+    setCursorPosition(left, startRow + 17);
+    std::cout << "Type 'help' to display available commands.";
+}
 
-    setCursorPosition(menuLeft, commandAreaTop + 6);
-    std::cout << " help          - Display commands\n";
+void displayHelpCommands(int startRow) {
+    int left = 2;
 
-    setCursorPosition(menuLeft, commandAreaTop + 7);
-    std::cout << " start_marquee - Start marquee animation\n";
-
-    setCursorPosition(menuLeft, commandAreaTop + 8);
-    std::cout << " stop_marquee  - Stop marquee animation\n";
-
-    setCursorPosition(menuLeft, commandAreaTop + 9);
-    std::cout << " set_text      - Set marquee text\n";
-
-    setCursorPosition(menuLeft, commandAreaTop + 10);
-    std::cout << " set_speed     - Set marquee speed in ms\n";
-
-    setCursorPosition(menuLeft, commandAreaTop + 11);
-    std::cout << " exit          - Exit the console\n";
-
-    setCursorPosition(menuLeft, commandAreaTop + 13);
-    std::cout << "----------------------------------------";
-
-    setCursorPosition(menuLeft, commandAreaTop + 14);
-    std::cout << " Enter command: ";
+    setCursorPosition(left, startRow);
+    std::cout << "---------------------- COMMANDS ----------------------";
+    setCursorPosition(left, startRow + 1);
+    std::cout << "help          - Display commands";
+    setCursorPosition(left, startRow + 2);
+    std::cout << "start_marquee - Start marquee animation";
+    setCursorPosition(left, startRow + 3);
+    std::cout << "stop_marquee  - Stop marquee animation";
+    setCursorPosition(left, startRow + 4);
+    std::cout << "set_text      - Set marquee text";
+    setCursorPosition(left, startRow + 5);
+    std::cout << "set_speed     - Set speed in ms";
+    setCursorPosition(left, startRow + 6);
+    std::cout << "clear         - Clear the screen";
+    setCursorPosition(left, startRow + 7);
+    std::cout << "exit          - Exit the console";
+    setCursorPosition(left, startRow + 8);
+    std::cout << "------------------------------------------------------";
 }
 
 int main() {
-    HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
-    GetConsoleScreenBufferInfo(console, &consoleInfo);
-
-    int windowWidth =
-        consoleInfo.srWindow.Right - consoleInfo.srWindow.Left + 1;
-
-    int windowHeight =
-        consoleInfo.srWindow.Bottom - consoleInfo.srWindow.Top + 1;
-
-    const int commandAreaHeight = 19;
-
-    int commandAreaTop = windowHeight - commandAreaHeight;
-
+    // No window size restrictions: you can resize, expand, or maximize freely
     system("cls");
+
+    int windowWidth = 0;
+    int windowHeight = 0;
+    getConsoleSize(windowWidth, windowHeight);
+
+    int previousWidth = windowWidth;
+    int previousHeight = windowHeight;
 
     Marquee marquee;
     std::string command;
+    bool showHelpMenu = false;
 
-    displayWelcome(commandAreaTop, windowWidth);
+    const int headerStartRow = 1;
+    const int helpMenuStartRow = 19;
+
+    auto getPromptRow = [&]() {
+        return showHelpMenu ? (helpMenuStartRow + 10) : 19;
+        };
+
+    auto renderPrompt = [&]() {
+        int row = getPromptRow();
+        clearCommandLine(row, windowWidth > 4 ? windowWidth - 4 : 40);
+        setCursorPosition(2, row);
+        std::cout << "Command> ";
+        };
+
+    auto redrawScreen = [&]() {
+        system("cls");
+        displayHeader(headerStartRow);
+
+        if (showHelpMenu) {
+            displayHelpCommands(helpMenuStartRow);
+        }
+
+        renderPrompt();
+        };
+
+    redrawScreen();
 
     while (true) {
-        std::getline(std::cin, command);
+        int promptRow = getPromptRow();
+        setCursorPosition(11, promptRow);
 
-        if (command == "help") {
+        if (!std::getline(std::cin, command)) {
+            break;
+        }
+
+        getConsoleSize(windowWidth, windowHeight);
+        bool resized = (windowWidth != previousWidth || windowHeight != previousHeight);
+
+        if (resized) {
+            previousWidth = windowWidth;
+            previousHeight = windowHeight;
+
+            const bool marqueeWasRunning = marquee.isRunning();
+            if (marqueeWasRunning) {
+                marquee.stop();
+            }
+
+            redrawScreen();
+
+            if (marqueeWasRunning) {
+                marquee.start();
+            }
+        }
+
+        promptRow = getPromptRow();
+
+        if (command == "exit") {
+            if (marquee.isRunning()) {
+                marquee.stop();
+            }
             system("cls");
+            std::cout << "CSOPESY Emulator Terminated.\n";
+            return 0;
+        }
+        else if (command == "help") {
+            const bool marqueeWasRunning = marquee.isRunning();
+            if (marqueeWasRunning) {
+                marquee.stop();
+            }
 
-            displayMenu(commandAreaTop, windowWidth);
+            showHelpMenu = true;
+            redrawScreen();
+
+            if (marqueeWasRunning) {
+                marquee.start();
+            }
         }
         else if (command == "start_marquee") {
+            if (marquee.isRunning()) {
+                marquee.stop();
+            }
+            redrawScreen();
             marquee.start();
-
-            clearCommandLine(commandAreaTop, windowWidth);
-
-            std::cout << " Enter command: ";
         }
         else if (command == "stop_marquee") {
             marquee.stop();
-
-            clearCommandLine(commandAreaTop, windowWidth);
-
-            std::cout << " Enter command: ";
+            redrawScreen();
         }
         else if (command == "set_text") {
+            clearCommandLine(promptRow);
+            printPromptLine(promptRow, "Enter marquee text: ");
+
             std::string text;
-
-            clearCommandLine(commandAreaTop, windowWidth);
-
-            std::cout << " Enter marquee text: ";
-
             std::getline(std::cin, text);
-
             marquee.setText(text);
 
-            clearCommandLine(commandAreaTop, windowWidth);
-
-            std::cout << " Enter command: ";
+            renderPrompt();
         }
         else if (command == "set_speed") {
-            int speed;
+            clearCommandLine(promptRow);
+            printPromptLine(promptRow, "Enter speed in ms: ");
 
-            clearCommandLine(commandAreaTop, windowWidth);
-
-            std::cout << " Enter speed in milliseconds: ";
-
+            int speed = 0;
             std::cin >> speed;
-            std::cin.ignore(1000, '\n');
 
-            marquee.setSpeed(speed);
+            if (std::cin.fail() || speed <= 0) {
+                std::cin.clear();
+                std::cin.ignore(1000, '\n');
 
-            clearCommandLine(commandAreaTop, windowWidth);
+                clearCommandLine(promptRow);
+                printPromptLine(promptRow, "Invalid speed.");
+                Sleep(800);
+            }
+            else {
+                std::cin.ignore(1000, '\n');
+                marquee.setSpeed(speed);
+            }
 
-            std::cout << " Enter command: ";
+            renderPrompt();
         }
-        else if (command == "exit") {
-            marquee.stop();
-            break;
+        else if (command == "clear") {
+            const bool marqueeWasRunning = marquee.isRunning();
+            if (marqueeWasRunning) {
+                marquee.stop();
+            }
+
+            showHelpMenu = false;
+            redrawScreen();
+
+            if (marqueeWasRunning) {
+                marquee.start();
+            }
+        }
+        else if (command == "initialize" || command == "screen" ||
+            command == "scheduler-start" || command == "scheduler-stop" ||
+            command == "report-util") {
+            clearCommandLine(promptRow);
+            printPromptLine(promptRow, command + " recognized.");
+            Sleep(800);
+            renderPrompt();
         }
         else {
-            clearCommandLine(commandAreaTop, windowWidth);
-
-            std::cout << " Unknown command.";
-
-            setCursorPosition(
-                (windowWidth - 40) / 2,
-                commandAreaTop + 15
-            );
-
-            std::cout << " Enter command: ";
-
-            setCursorPosition(
-                (windowWidth - 40) / 2,
-                commandAreaTop + 14
-            );
+            clearCommandLine(promptRow);
+            printPromptLine(promptRow, "Unknown command.");
+            Sleep(800);
+            renderPrompt();
         }
     }
 
+    if (marquee.isRunning()) {
+        marquee.stop();
+    }
     return 0;
 }
