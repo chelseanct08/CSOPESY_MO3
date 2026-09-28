@@ -20,6 +20,7 @@ void clearCommandLine(int promptRow, int windowHeight) {
     setCursorPosition(inputLeft, promptRow);
 }
 
+// reads input
 std::string readInputLine(int promptRow, const std::string& prompt) {
     HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
     DWORD originalMode = 0;
@@ -90,6 +91,7 @@ std::string readInputLine(int promptRow, const std::string& prompt) {
     return value;
 }
 
+// checks if the speed input is a positive number
 bool parsePositiveSpeed(const std::string& input, int& speed) {
     const char* begin = input.data();
     const char* end = begin + input.size();
@@ -242,6 +244,7 @@ int main() {
 
     system("cls");
 
+    // redraws the current screen
     auto redrawScreen = [&]() {
         system("cls");
 
@@ -309,6 +312,7 @@ int main() {
             }
         }
 
+        // displays main menu
         if (command == "help") {
             bool marqueeWasRunning = marquee.isRunning();
             if (marqueeWasRunning) {
@@ -332,6 +336,8 @@ int main() {
                 marquee.start();
             }
         }
+
+        // starts marquee
         else if (command == "start_marquee") {
             if (marquee.isRunning()) {
                 marquee.stop();
@@ -345,10 +351,14 @@ int main() {
                 windowWidth
             );
         }
+
+        // stops marquee
         else if (command == "stop_marquee") {
             marquee.stop();
             redrawScreen();
         }
+
+        // sets marquee text
         else if (command == "set_text") {
             std::string text;
 
@@ -374,6 +384,8 @@ int main() {
                 " Enter command: "
             );
         }
+
+        // sets marquee speed
         else if (command == "set_speed") {
             int speed;
 
@@ -425,11 +437,15 @@ int main() {
                 );
             }
         }
+
+        // exits the program
         else if (command == "exit") {
             marquee.stop();
             clearEntireConsole();
             break;
         }
+
+        // handles invalid commands
         else {
             clearCommandLine(
                 commandAreaTop,

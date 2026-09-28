@@ -11,9 +11,11 @@
 #endif
 #include <windows.h>
 
+// sets the left boundary of the marquee area
 inline constexpr int marqueeBorderColumn = 45;
 inline constexpr int marqueeAreaLeft = marqueeBorderColumn + 2;
 
+// sets the position of the cursor
 inline void setCursorPosition(int x, int y) {
     HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -33,11 +35,13 @@ private:
     std::thread marqueeThread;
     std::mutex textMutex;
 
+    // current position and direction of the marquee
     int x = marqueeAreaLeft;
     int y = 1;
     int dx = 1;
     int dy = 1;
 
+    // stores the background before the marquee moves
     std::vector<std::string> previousBackground;
     int previousX = marqueeAreaLeft;
 

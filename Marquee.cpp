@@ -12,6 +12,7 @@ const char* defaultMarquee =
     "  \\_____|_____/ \\____/|_|    |______|_____/   |_|";
 }
 
+// default text, speed, and running state
 Marquee::Marquee()
     : text(defaultMarquee), speed(125), running(false) {
 }
@@ -75,6 +76,7 @@ void Marquee::run() {
             consoleInfo.srWindow.Bottom -
             consoleInfo.srWindow.Top + 1;
 
+        // gets the current marquee text
         std::string currentText;
         {
             std::lock_guard<std::mutex> lock(textMutex);
@@ -88,6 +90,7 @@ void Marquee::run() {
             continue;
         }
 
+        // splits the text into separate lines
         std::vector<std::string> lines;
         size_t lineStart = 0;
 
@@ -109,6 +112,7 @@ void Marquee::run() {
             lineStart = lineEnd + 1;
         }
 
+        // gets the width of the marquee text
         int textWidth = 0;
         for (const std::string& line : lines) {
             textWidth = std::max(
@@ -128,6 +132,7 @@ void Marquee::run() {
 
         textWidth = std::min(textWidth, availableWidth);
 
+        // sets the movement boundaries
         int minX = std::min(
             marqueeAreaLeft,
             std::max(0, windowWidth - 1)
@@ -147,6 +152,7 @@ void Marquee::run() {
         x = std::clamp(x, minX, maxX);
         y = std::clamp(y, minY, maxY);
 
+        // reverses direction when the marquee reaches a boundary
         if (x >= maxX) {
             x = maxX;
             dx = -1;
@@ -165,6 +171,7 @@ void Marquee::run() {
             dy = 1;
         }
 
+        // restores the background from the previous position
         for (size_t index = 0;
              index < previousBackground.size();
              ++index) {
@@ -187,6 +194,7 @@ void Marquee::run() {
             );
         }
 
+        // saves the background and draws the marquee
         std::vector<std::string> currentBackground(lines.size());
 
         for (size_t index = 0; index < lines.size(); ++index) {
@@ -222,6 +230,7 @@ void Marquee::run() {
         previousX = x;
         previousY = y;
 
+        // controls how often the marquee updates
         std::this_thread::sleep_for(
             std::chrono::milliseconds(speed)
         );
@@ -230,6 +239,7 @@ void Marquee::run() {
         y += dy;
     }
 
+    // restores the last background when the animation stops
     for (size_t index = 0;
          index < previousBackground.size();
          ++index) {
