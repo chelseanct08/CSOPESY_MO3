@@ -1,13 +1,26 @@
 # CSOPESY MO3 - OS Emulator
 
-Members: Raeka Hernaez, Ram Liwanag, Paul Serrano, Chelsea Tamayo
+## Members
 
-## To compile and run the code:
+- Raeka Hernaez
+- Ram Liwanag
+- Paul Serrano
+- Chelsea Tamayo
 
-1. Go to CMD where the project directory is located.
+## How to Compile and Run
 
-2. Enter: g++ -std=c++17 -Wall -Wextra main.cpp Marquee.cpp -o csopesy.exe
+1. Open **CMD** and navigate to the project directory.
 
-3. Enter: csopesy.exe
+2. Compile the program using:
 
-to run the program.
+   `g++ -std=c++17 -Wall -Wextra main.cpp Marquee.cpp -o csopesy.exe`
+
+3. Run the program using:
+
+   `csopesy.exe`
+
+## Entry Class File
+
+The `main()` function is located in:
+
+**`main.cpp`**
