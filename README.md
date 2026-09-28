@@ -2,10 +2,10 @@
 
 ## Members
 
-- Raeka Hernaez
-- Ram Liwanag
-- Paul Serrano
-- Chelsea Tamayo
+- Hernaez, Raeka Estrelle R.
+- Liwanag, Ram Miguel C.
+- Serrano, Paul
+- Tamayo, Chelsea Nichole C.
 
 ## How to Compile and Run
 
