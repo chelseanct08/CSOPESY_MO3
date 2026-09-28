@@ -6,12 +6,8 @@ Members: Raeka Hernaez, Ram Liwanag, Paul Serrano, Chelsea Tamayo
 
 1. Go to CMD where the project directory is located.
 
-2. Enter:
+2. Enter: g++ -std=c++17 -Wall -Wextra main.cpp Marquee.cpp -o csopesy.exe
 
-g++ -std=c++17 -Wall -Wextra main.cpp Marquee.cpp -o csopesy.exe
-
-3. Enter:
-
-csopesy.exe
+3. Enter: csopesy.exe
 
 to run the program.
