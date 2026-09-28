@@ -1,10 +1,19 @@
 #include "Marquee.h"
-#include <iostream>
-#include <windows.h>
+#include <algorithm>
 #include <chrono>
 
+namespace {
+const char* defaultMarquee =
+    "   _____  _____  ____  _____  ______  _______     __\n"
+    "  / ____|/ ____|/ __ \\|  __ \\|  ____|/ ____\\ \\   / /\n"
+    " | |    | (___ | |  | | |__) | |__  | (___  \\ \\_/ /\n"
+    " | |     \\___ \\| |  | |  ___/|  __|  \\___ \\  \\   /\n"
+    " | |____ ____) | |__| | |    | |____ ____) |  | |\n"
+    "  \\_____|_____/ \\____/|_|    |______|_____/   |_|";
+}
+
 Marquee::Marquee()
-    : text("Hello World"), speed(100), running(false) {
+    : text(defaultMarquee), speed(125), running(false) {
 }
 
 Marquee::~Marquee() {
@@ -16,15 +25,15 @@ void Marquee::start() {
         return;
     }
 
+    if (marqueeThread.joinable()) {
+        marqueeThread.join();
+    }
+
     running = true;
     marqueeThread = std::thread(&Marquee::run, this);
 }
 
 void Marquee::stop() {
-    if (!running) {
-        return;
-    }
-
     running = false;
 
     if (marqueeThread.joinable()) {
@@ -44,39 +53,29 @@ void Marquee::setSpeed(int newSpeed) {
 }
 
 bool Marquee::isRunning() const {
-    return running;
+    return running.load();
 }
 
 void Marquee::run() {
     HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
-
-    if (!GetConsoleScreenBufferInfo(console, &consoleInfo)) {
-        running = false;
-        return;
-    }
-
-    int windowWidth =
-        consoleInfo.srWindow.Right - consoleInfo.srWindow.Left + 1;
-
-    const int marqueeTop = 1;
-    const int marqueeHeight = 8;
-    const int marqueeBottom = marqueeTop + marqueeHeight - 1;
-
-    int x = 0;
-    int y = 1;
-
-    int dx = 1;
-    int dy = 1;
-
-    std::string previousText;
-    int previousX = 0;
-    int previousY = 1;
-
     while (running) {
-        std::string currentText;
+        CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
+        if (!GetConsoleScreenBufferInfo(console, &consoleInfo)) {
+            running = false;
+            break;
+        }
+
+        int windowWidth =
+            consoleInfo.srWindow.Right -
+            consoleInfo.srWindow.Left + 1;
+
+        int windowHeight =
+            consoleInfo.srWindow.Bottom -
+            consoleInfo.srWindow.Top + 1;
+
+        std::string currentText;
         {
             std::lock_guard<std::mutex> lock(textMutex);
             currentText = text;
@@ -89,72 +88,137 @@ void Marquee::run() {
             continue;
         }
 
-        int textWidth = static_cast<int>(currentText.length());
+        std::vector<std::string> lines;
+        size_t lineStart = 0;
 
-        if (textWidth >= windowWidth) {
-            textWidth = windowWidth - 1;
-            currentText = currentText.substr(0, textWidth);
+        while (lineStart <= currentText.length()) {
+            size_t lineEnd = currentText.find('\n', lineStart);
+
+            if (lineEnd == std::string::npos) {
+                lineEnd = currentText.length();
+            }
+
+            lines.push_back(
+                currentText.substr(lineStart, lineEnd - lineStart)
+            );
+
+            if (lineEnd == currentText.length()) {
+                break;
+            }
+
+            lineStart = lineEnd + 1;
         }
 
-        int maxX = windowWidth - textWidth;
-
-        if (maxX < 0) {
-            maxX = 0;
+        int textWidth = 0;
+        for (const std::string& line : lines) {
+            textWidth = std::max(
+                textWidth,
+                static_cast<int>(line.length())
+            );
         }
+
+        const int availableWidth =
+            std::max(1, windowWidth - marqueeAreaLeft - 1);
+
+        for (std::string& line : lines) {
+            if (static_cast<int>(line.length()) > availableWidth) {
+                line.resize(availableWidth);
+            }
+        }
+
+        textWidth = std::min(textWidth, availableWidth);
+
+        int minX = std::min(
+            marqueeAreaLeft,
+            std::max(0, windowWidth - 1)
+        );
+
+        int maxX = std::max(
+            minX,
+            windowWidth - textWidth - 1
+        );
+
+        int minY = 0;
+        int maxY = std::max(
+            minY,
+            windowHeight - static_cast<int>(lines.size())
+        );
+
+        x = std::clamp(x, minX, maxX);
+        y = std::clamp(y, minY, maxY);
 
         if (x >= maxX) {
             x = maxX;
             dx = -1;
         }
-
-        if (x <= 0) {
-            x = 0;
+        else if (x <= minX) {
+            x = minX;
             dx = 1;
         }
 
-        if (y >= marqueeBottom) {
-            y = marqueeBottom;
+        if (y >= maxY) {
+            y = maxY;
             dy = -1;
         }
-
-        if (y <= marqueeTop) {
-            y = marqueeTop;
+        else if (y <= minY) {
+            y = minY;
             dy = 1;
         }
 
-        // Erase the previous text
-        if (!previousText.empty()) {
-            COORD oldPosition;
-            oldPosition.X = static_cast<SHORT>(previousX);
-            oldPosition.Y = static_cast<SHORT>(previousY);
+        for (size_t index = 0;
+             index < previousBackground.size();
+             ++index) {
+            if (previousBackground[index].empty()) {
+                continue;
+            }
+
+            COORD oldPosition = {
+                static_cast<SHORT>(previousX),
+                static_cast<SHORT>(previousY + static_cast<int>(index))
+            };
 
             DWORD charsWritten = 0;
-
             WriteConsoleOutputCharacterA(
                 console,
-                std::string(previousText.length(), ' ').c_str(),
-                static_cast<DWORD>(previousText.length()),
+                previousBackground[index].c_str(),
+                static_cast<DWORD>(previousBackground[index].length()),
                 oldPosition,
                 &charsWritten
             );
         }
 
-        // Draw the current text
-        COORD position;
-        position.X = static_cast<SHORT>(x);
-        position.Y = static_cast<SHORT>(y);
+        std::vector<std::string> currentBackground(lines.size());
 
-        DWORD charsWritten = 0;
+        for (size_t index = 0; index < lines.size(); ++index) {
+            COORD position = {
+                static_cast<SHORT>(x),
+                static_cast<SHORT>(y + static_cast<int>(index))
+            };
 
-        WriteConsoleOutputCharacterA(
-            console,
-            currentText.c_str(),
-            static_cast<DWORD>(currentText.length()),
-            position,
-            &charsWritten
-        );
+            if (!lines[index].empty()) {
+                currentBackground[index].resize(lines[index].length(), ' ');
 
-        previousText = currentText;
+                DWORD charsRead = 0;
+                ReadConsoleOutputCharacterA(
+                    console,
+                    &currentBackground[index][0],
+                    static_cast<DWORD>(currentBackground[index].length()),
+                    position,
+                    &charsRead
+                );
+            }
+
+            DWORD charsWritten = 0;
+            WriteConsoleOutputCharacterA(
+                console,
+                lines[index].c_str(),
+                static_cast<DWORD>(lines[index].length()),
+                position,
+                &charsWritten
+            );
+        }
+
+        previousBackground = currentBackground;
         previousX = x;
         previousY = y;
 
@@ -166,20 +230,27 @@ void Marquee::run() {
         y += dy;
     }
 
-    // Clear the last marquee text
-    if (!previousText.empty()) {
-        COORD position;
-        position.X = static_cast<SHORT>(previousX);
-        position.Y = static_cast<SHORT>(previousY);
+    for (size_t index = 0;
+         index < previousBackground.size();
+         ++index) {
+        if (previousBackground[index].empty()) {
+            continue;
+        }
+
+        COORD position = {
+            static_cast<SHORT>(previousX),
+            static_cast<SHORT>(previousY + static_cast<int>(index))
+        };
 
         DWORD charsWritten = 0;
-
         WriteConsoleOutputCharacterA(
             console,
-            std::string(previousText.length(), ' ').c_str(),
-            static_cast<DWORD>(previousText.length()),
+            previousBackground[index].c_str(),
+            static_cast<DWORD>(previousBackground[index].length()),
             position,
             &charsWritten
         );
     }
+
+    previousBackground.clear();
 }
