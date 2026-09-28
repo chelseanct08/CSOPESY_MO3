@@ -1,4 +1,4 @@
-To compile and run the code:
+# To compile and run the code: #
 go to cmd where the project directory is
 enter:
 
