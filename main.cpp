@@ -1,7 +1,103 @@
 #include <iostream>
 #include <string>
+#include <charconv>
+#include <system_error>
 #include <windows.h>
 #include "Marquee.h"
+
+namespace {
+constexpr int inputLeft = 2;
+constexpr int inputRight = marqueeBorderColumn - 1;
+
+void clearCommandLine(int promptRow, int windowHeight) {
+    const int inputWidth = inputRight - inputLeft + 1;
+
+    for (int row = promptRow; row < windowHeight; ++row) {
+        setCursorPosition(inputLeft, row);
+        std::cout << std::string(inputWidth, ' ');
+    }
+
+    setCursorPosition(inputLeft, promptRow);
+}
+
+std::string readInputLine(int promptRow, const std::string& prompt) {
+    HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD originalMode = 0;
+    GetConsoleMode(input, &originalMode);
+
+    SetConsoleMode(
+        input,
+        originalMode & ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT)
+    );
+
+    setCursorPosition(inputLeft, promptRow);
+    std::cout << prompt;
+
+    const int promptLength = static_cast<int>(prompt.length());
+    int cursorColumn = inputLeft + promptLength;
+    int cursorRow = promptRow;
+    std::string value;
+    INPUT_RECORD record;
+    DWORD recordsRead = 0;
+
+    while (true) {
+        ReadConsoleInput(input, &record, 1, &recordsRead);
+
+        if (record.EventType != KEY_EVENT ||
+            !record.Event.KeyEvent.bKeyDown) {
+            continue;
+        }
+
+        const KEY_EVENT_RECORD& key = record.Event.KeyEvent;
+        if (key.wVirtualKeyCode == VK_RETURN) {
+            break;
+        }
+
+        if (key.wVirtualKeyCode == VK_BACK) {
+            if (value.empty()) {
+                continue;
+            }
+
+            value.pop_back();
+            if (cursorColumn == inputLeft) {
+                --cursorRow;
+                cursorColumn = inputRight + 1;
+            }
+            --cursorColumn;
+            setCursorPosition(cursorColumn, cursorRow);
+            std::cout << ' ';
+            setCursorPosition(cursorColumn, cursorRow);
+            continue;
+        }
+
+        const char character = key.uChar.AsciiChar;
+        if (character < 32 || character > 126) {
+            continue;
+        }
+
+        if (cursorColumn > inputRight) {
+            ++cursorRow;
+            cursorColumn = inputLeft;
+            setCursorPosition(cursorColumn, cursorRow);
+        }
+
+        value += character;
+        std::cout << character;
+        ++cursorColumn;
+    }
+
+    SetConsoleMode(input, originalMode);
+    return value;
+}
+
+bool parsePositiveSpeed(const std::string& input, int& speed) {
+    const char* begin = input.data();
+    const char* end = begin + input.size();
+    const auto result = std::from_chars(begin, end, speed);
+
+    return result.ec == std::errc() && result.ptr == end && speed > 0;
+}
+}
 
 void getConsoleSize(int& windowWidth, int& windowHeight) {
     HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -53,26 +149,6 @@ void clearEntireConsole() {
     );
 
     SetConsoleCursorPosition(console, home);
-}
-
-void clearCommandLine(int promptRow, int) {
-    const int menuWidth = 42;
-    int menuLeft = 2;
-
-    setCursorPosition(
-        menuLeft,
-        promptRow
-    );
-
-    std::cout << std::string(
-        menuWidth,
-        ' '
-    );
-
-    setCursorPosition(
-        menuLeft,
-        promptRow
-    );
 }
 
 void displayWelcome(int, int) {
@@ -199,10 +275,11 @@ int main() {
     );
 
     while (true) {
-        std::getline(
-            std::cin,
-            command
+        clearCommandLine(
+            commandAreaTop,
+            windowHeight
         );
+        command = readInputLine(commandAreaTop, " Enter command: ");
 
         getConsoleSize(
             windowWidth,
@@ -277,24 +354,19 @@ int main() {
 
             clearCommandLine(
                 commandAreaTop,
-                windowWidth
+                windowHeight
             );
 
-            printPromptLine(
+            text = readInputLine(
                 commandAreaTop,
                 " Enter marquee text: "
-            );
-
-            std::getline(
-                std::cin,
-                text
             );
 
             marquee.setText(text);
 
             clearCommandLine(
                 commandAreaTop,
-                windowWidth
+                windowHeight
             );
 
             printPromptLine(
@@ -307,23 +379,19 @@ int main() {
 
             clearCommandLine(
                 commandAreaTop,
-                windowWidth
+                windowHeight
             );
 
-            printPromptLine(
+            std::string speedInput = readInputLine(
                 commandAreaTop,
                 " Enter speed in milliseconds: "
             );
 
-            std::cin >> speed;
-
-            if (std::cin.fail()) {
-                std::cin.clear();
-                std::cin.ignore(1000, '\n');
+            if (!parsePositiveSpeed(speedInput, speed)) {
 
                 clearCommandLine(
                     commandAreaTop,
-                    windowWidth
+                    windowHeight
                 );
 
                 printPromptLine(
@@ -335,32 +403,7 @@ int main() {
 
                 clearCommandLine(
                     commandAreaTop,
-                    windowWidth
-                );
-
-                printPromptLine(
-                    commandAreaTop,
-                    " Enter command: "
-                );
-            }
-            else if (speed <= 0) {
-                std::cin.ignore(1000, '\n');
-
-                clearCommandLine(
-                    commandAreaTop,
-                    windowWidth
-                );
-
-                printPromptLine(
-                    commandAreaTop,
-                    " Invalid speed."
-                );
-
-                Sleep(1000);
-
-                clearCommandLine(
-                    commandAreaTop,
-                    windowWidth
+                    windowHeight
                 );
 
                 printPromptLine(
@@ -369,13 +412,11 @@ int main() {
                 );
             }
             else {
-                std::cin.ignore(1000, '\n');
-
                 marquee.setSpeed(speed);
 
                 clearCommandLine(
                     commandAreaTop,
-                    windowWidth
+                    windowHeight
                 );
 
                 printPromptLine(
@@ -392,7 +433,7 @@ int main() {
         else {
             clearCommandLine(
                 commandAreaTop,
-                windowWidth
+                windowHeight
             );
 
             printPromptLine(
@@ -404,7 +445,7 @@ int main() {
 
             clearCommandLine(
                 commandAreaTop,
-                windowWidth
+                windowHeight
             );
 
             printPromptLine(
